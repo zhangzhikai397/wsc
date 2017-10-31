@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <script type="text/javascript">
-        window.ws = new WebSocket('ws://127.0.0.1:8088');
+        window.ws = new WebSocket('ws://127.0.0.1:8088/main/room');
         ws.onclose = function () {
             console.error('Connection closed');
         };
@@ -13,10 +13,14 @@
             console.error('Error happened');
         };
 
+        // Catch messages
         ws.onmessage = function (msg) {
-            console.log('Received', msg.data);
+            console.log('Received', msg);
             document.getElementById('received').innerText = msg.data;
         };
+
+        // It's will be ignored
+        ws.send('Something');
     </script>
 </head>
 <body>

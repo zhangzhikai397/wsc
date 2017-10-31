@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from wsc.server import Server
+from wsc.client import WSC
 
 
 if __name__ == '__main__':
-    s = Server()
-    s.serve_forever()
+    w = WSC('key')
+    w.send('main/room', 'Hello')

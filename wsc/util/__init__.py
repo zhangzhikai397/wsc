@@ -1,24 +1,5 @@
-import six
-import sys
-from importlib import import_module
-
-
-def get_bytes(str_o):
-    """
-    Returns bytes
-    :param str str_o:
-    :return bytes:
-    """
-    return str.encode(str_o)
-
-
-def get_string(bytes_o):
-    """
-    Returns str
-    :param bytes bytes_o:
-    :return str:
-    """
-    return bytes_o.decode()
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
 
 def unicode_encodable(data):
@@ -40,44 +21,24 @@ def unicode_decodeable(data):
     :return:
     """
     try:
-        return data.decode('utf-8')
+        return data.decode('UTF-8', errors='strict')
     except UnicodeDecodeError:
         return False
 
 
-def recv_chunks(sock, chunk_size=1024, max_size=None):
+def is_unicode(s):
     """
-    Receive chunks generator
-    :param sock:
-    :param int chunk_size:
-    :param int max_size:
+    Check is unicode
+    :param s:
     :return:
     """
-    chunk = sock.recv(chunk_size)
-    yield chunk
-
-    while len(chunk) == chunk_size or (max_size is not None and len(chunk) >= max_size):
-        chunk = sock.recv(chunk_size)
-        yield chunk
+    return isinstance(s, __builtins__['unicode' if 'unicode' in __builtins__ else 'str'])
 
 
-def import_string(dotted_path):
+def to_unicode(s):
     """
-    Import a dotted module path and return the attribute/class designated by the
-    last name in the path. Raise ImportError if the import failed.
+    Convert str to unicode if needs
+    :param s:
+    :return:
     """
-    try:
-        module_path, class_name = dotted_path.rsplit('.', 1)
-    except ValueError:
-        msg = "%s doesn't look like a module path" % dotted_path
-        six.reraise(ImportError, ImportError(msg), sys.exc_info()[2])
-
-    module = import_module(module_path)
-
-    try:
-        return getattr(module, class_name)
-    except AttributeError:
-        msg = 'Module "%s" does not define a "%s" attribute/class' % (
-            module_path, class_name)
-        six.reraise(ImportError, ImportError(msg), sys.exc_info()[2])
-
+    return s.decode('utf-8') if not is_unicode(s) else s

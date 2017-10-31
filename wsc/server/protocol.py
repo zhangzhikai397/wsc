@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import base64
 import hashlib
 
@@ -29,8 +31,8 @@ class Adapter(object):
         :param key:
         :return:
         """
-        hash = hashlib.sha1(key.encode() + Adapter.GUID.encode())
-        response_key = base64.b64encode(hash.digest()).strip()
+        h = hashlib.sha1(key.encode('utf-8') + Adapter.GUID.encode('utf-8'))
+        response_key = base64.b64encode(h.digest()).strip()
         return response_key.decode('ASCII')
 
     @staticmethod

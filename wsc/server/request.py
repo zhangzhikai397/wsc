@@ -1,5 +1,6 @@
-from http.server import BaseHTTPRequestHandler
-from io import BytesIO
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+from wsc.server.compatiblity import BaseHTTPRequestHandler, BytesIO
 
 
 class HTTPRequest(BaseHTTPRequestHandler):
@@ -26,4 +27,4 @@ class HTTPRequest(BaseHTTPRequestHandler):
         """
         if self._body is None:
             self._body = self.rfile.read(int(self.headers.get('content-length', 0)))
-        return self._body.decode()
+        return self._body.decode('utf-8')

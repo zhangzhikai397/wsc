@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import logging
 import wsc.logging
 from wsc.server.protocol import Adapter
 from wsc.server.handler import ConnectionHandler
 from wsc.server.manager import ConnectionsManger
-from socketserver import TCPServer, ThreadingMixIn
+from wsc.server.compatiblity import TCPServer, ThreadingMixIn
 
 
 logger = logging.getLogger(__name__)

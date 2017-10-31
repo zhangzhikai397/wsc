@@ -1,12 +1,14 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import re
 import struct
 import logging
 import wsc.logging
 from wsc.server.protocol import Adapter
 from wsc.server.request import HTTPRequest
-from socketserver import StreamRequestHandler
 from wsc.server.response import HTTPResponse, status
-from wsc.util import unicode_decodeable, unicode_encodable
+from wsc.server.compatiblity import StreamRequestHandler
+from wsc.util import unicode_decodeable, unicode_encodable, to_unicode, is_unicode
 
 
 logger = logging.getLogger(__name__)
@@ -50,7 +52,10 @@ class ConnectionHandler(StreamRequestHandler):
             if not self.handshake_done:
                 self.handshake()
             elif self.valid_client:
-                self.read_next_message()
+                try:
+                    self.read_next_message()
+                except:
+                    continue
 
     def handle_post(self, message):
         """
@@ -164,12 +169,13 @@ class ConnectionHandler(StreamRequestHandler):
         their usage cases are limited - when we don't know the payload length.
         """
         # Validate message
+        message = to_unicode(message)
         if isinstance(message, bytes):
             message = unicode_decodeable(message)  # this is slower but ensures we have UTF-8
             if not message:
                 logger.warning("Can\'t send message, message is not valid UTF-8")
                 return False
-        elif isinstance(message, str):
+        elif is_unicode(message):
             pass
         else:
             logger.warning('Can\'t send message, message has to be a string or bytes. Given type is %s' % type(message))
@@ -206,12 +212,12 @@ class ConnectionHandler(StreamRequestHandler):
         Should dispatch request and send handshake if needs
         :return:
         """
-        message = self.request.recv(1024).decode().strip()
+        message = self.request.recv(1024).decode('utf-8', errors='strict').strip()
         upgrade = re.search('\nupgrade[\s]*:[\s]*websocket', message.lower())
 
         if not upgrade:
             self.keep_alive = False
-            self.handle_post(message.encode())
+            self.handle_post(message.encode('utf-8'))
             return
 
         key = re.search('\nsec-websocket-key[\s]*:[\s]*(.*)\r\n', message, re.I)
@@ -223,7 +229,7 @@ class ConnectionHandler(StreamRequestHandler):
             return
 
         response = Adapter.handshake_response(key)
-        self.handshake_done = self.request.send(response.encode())
+        self.handshake_done = self.request.send(response.encode('utf-8'))
         self.valid_client = True
 
         # Add new client

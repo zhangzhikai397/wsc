@@ -78,4 +78,4 @@ To receive message from websocket server on client side, you should do something
         console.log('Received', msg.data);
     };
     
-Also, you can see simple example at `test.html` file
+Also, you can see simple example at `demo.html` file
