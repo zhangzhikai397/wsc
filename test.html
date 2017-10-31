@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="text/javascript">
+        window.ws = new WebSocket('ws://127.0.0.1:8088');
+        ws.onclose = function () {
+            console.error('Connection closed');
+        };
+
+        ws.onerror = function () {
+            console.error('Error happened');
+        };
+
+        ws.onmessage = function (msg) {
+            console.log('Received', msg.data);
+            document.getElementById('received').innerText = msg.data;
+        };
+    </script>
+</head>
+<body>
+<div>
+    <p>Received message:</p>
+    <span id="received"></span>
+</div>
+</body>
+</html>
