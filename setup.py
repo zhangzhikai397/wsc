@@ -4,12 +4,12 @@ from setuptools import setup, find_packages
 setup(
     name='wsc',
     packages=find_packages(),
-    version='2017.10.31-1',
+    version='2017.10.31-2',
     description='Python WebSocket Channel',
     author='Maxim Papezhuk',
     author_email='maxp.job@gmail.com',
-    url='https://github.com/duverse/python-wsc',
-    download_url='https://github.com/duverse/wsc/tarball/v2017.10.31-1.zip',
+    url='https://github.com/duverse/wsc',
+    download_url='https://github.com/duverse/wsc/tarball/v2017.10.31-2.zip',
     keywords=['python', 'websocket', 'channel'],
     classifiers=[
         'Topic :: Internet',
