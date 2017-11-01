@@ -13,6 +13,7 @@ class HTTPRequest(BaseHTTPRequestHandler):
         :param request_text:
         """
         self.rfile = BytesIO(request_text)
+        self.wfile = BytesIO()
         self.raw_requestline = self.rfile.readline()
         self.error_code = self.error_message = None
         self.client_address = addr
