@@ -48,7 +48,7 @@ class APIHandler(object):
         Dispatch request
         :return:
         """
-        cmd = self.request.command.strip().lower()
+        cmd = self.request.method.strip().lower()
         if hasattr(self, 'process_{}'.format(cmd)):
             response = getattr(self, 'process_{}'.format(cmd))(self.request_channel)
             if not isinstance(response, JSONResponse):

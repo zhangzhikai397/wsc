@@ -22,11 +22,13 @@ will be ignored.
     
 # Run server
 
-Command `wsc` has only three arguments and one of them is required.
+Command `wsc` has only few arguments and one of them is required.
 
  - ACCESS_KEY (required, positional): It's any string to be used to avoid unexpected access to websocket serving API.
  - --host (optional, 0.0.0.0): Server host
  - --port (optional, 8088): Server port
+ - --ssl-key (optional, None): Server SSL Key file path
+ - --ssl-cert (optional, None): Server SSL Certificate file path
 
 **shell**
 

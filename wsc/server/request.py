@@ -1,32 +1,112 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from wsc.server.compatiblity import BaseHTTPRequestHandler, BytesIO
 
 
-class HTTPRequest(BaseHTTPRequestHandler):
-    """
-    HTTP Request parser
-    """
-    def __init__(self, request_text, addr):
+class RequestParser(object):
+    MAX_BODY_SIZE = 1024*1024
+
+    def __init__(self, request):
         """
-        Parse headers
-        :param request_text:
+        Socket read manager
+        :param socket:
         """
-        self.rfile = BytesIO(request_text)
-        self.wfile = BytesIO()
-        self.raw_requestline = self.rfile.readline()
-        self.error_code = self.error_message = None
-        self.client_address = addr
-        self.parse_request()
+        self._req = request
+        self._package_buffer = b''
+        self._headers = dict()
+        self._body = ''
 
-        self._body = None
+        self._http = 'HTTP/1.1'
+        self._path = '/'
+        self._method = 'get'
+
+        self._read()
+        self._parse()
+
+    @property
+    def raw(self):
+        """
+        Returns raw request
+        :return:
+        """
+        return self._package_buffer
+
+    @property
+    def http(self):
+        """
+        Returns HTTP Version
+        :return:
+        """
+        return self._http
+
+    @property
+    def path(self):
+        """
+        Returns request URI
+        :return:
+        """
+        return self._path
+
+    @property
+    def method(self):
+        """
+        Returns request method
+        :return:
+        """
+        return self._method
 
     @property
     def body(self):
         """
-        Read body
+        Returns request body
         :return:
         """
-        if self._body is None:
-            self._body = self.rfile.read(int(self.headers.get('content-length', 0)))
-        return self._body.decode('utf-8')
+        body = self._package_buffer.decode('utf-8').split('\r\n\r\n', 1)
+        return body[1] if len(body) > 1 else ''
+
+    @property
+    def headers(self):
+        """
+        Returns headers dict
+        :return dict:
+        """
+        return self._headers
+
+    def _read(self, max_size=MAX_BODY_SIZE):
+        """
+        Read
+        :param max_size:
+        :return:
+        """
+        if len(self._package_buffer) > 0:
+            return self._package_buffer
+
+        # Read headers
+        self._package_buffer += self._req.read()
+        if len(self._package_buffer) == 1:
+            self._package_buffer += self._req.read()
+
+        # Read body
+        self._parse()
+        content_length = int(self.headers.get('content-length', 0))
+        if content_length > 0:
+            self._package_buffer += self._req.recv(content_length if content_length <= max_size else max_size)
+        return self._package_buffer
+
+    def _parse(self):
+        """
+        Parse headers
+        :return:
+        """
+        headers = self._package_buffer.decode('utf-8').split('\r\n\r\n', 1)[0]
+        for index, line in enumerate(headers.split('\r\n')):
+            # Process head line
+            if index == 0:
+                method, uri, http = tuple(line.split(' '))
+                self._method = method.lower().strip()
+                self._path = uri.lower().strip()
+                self._http = http.strip()
+                continue
+
+            # Process other headers
+            key, value = line.split(':', 1)
+            self._headers[key.lower().strip()] = value.strip()

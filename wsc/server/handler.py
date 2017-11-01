@@ -6,7 +6,7 @@ import logging
 import wsc.logging
 from wsc.server.api import APIHandler
 from wsc.server.protocol import Adapter
-from wsc.server.request import HTTPRequest
+from wsc.server.request import RequestParser
 from wsc.server.compatiblity import StreamRequestHandler
 from wsc.util import unicode_decodeable, unicode_encodable, to_unicode, is_unicode
 
@@ -31,6 +31,7 @@ class ConnectionHandler(StreamRequestHandler):
         self.keep_alive = True
         self.valid_client = False
         self.handshake_done = False
+        self.rp = None
         StreamRequestHandler.__init__(self, socket, addr, server)
 
     def setup(self):
@@ -48,6 +49,7 @@ class ConnectionHandler(StreamRequestHandler):
         Dispatch request
         :return:
         """
+        self.rp = RequestParser(self.request)
         while self.keep_alive:
             if not self.handshake_done:
                 self.handshake()
@@ -59,14 +61,13 @@ class ConnectionHandler(StreamRequestHandler):
         else:
             self.finish()
 
-    def handle_post(self, message):
+    def handle_post(self):
         """
         Handle post request and serve message to channel
         subscribers
-        :param message:
         :return:
         """
-        APIHandler(self, HTTPRequest(message, self.client_address)).dispatch()
+        APIHandler(self, self.rp).dispatch()
 
     def finish(self):
         """
@@ -205,12 +206,12 @@ class ConnectionHandler(StreamRequestHandler):
         Should dispatch request and send handshake if needs
         :return:
         """
-        message = self.request.recv(1024).decode('utf-8', errors='strict').strip()
+        message = self.rp.raw.decode('utf-8', errors='strict').strip()
         upgrade = re.search('\nupgrade[\s]*:[\s]*websocket', message.lower())
 
         if not upgrade:
             self.keep_alive = False
-            self.handle_post(message.encode('utf-8'))
+            self.handle_post()
             return
 
         key = re.search('\nsec-websocket-key[\s]*:[\s]*(.*)\r\n', message, re.I)

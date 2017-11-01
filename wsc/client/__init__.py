@@ -40,14 +40,14 @@ class WSC(object):
     """
     WebSocketChannel library
     """
-    def __init__(self, access_key=None, hostname='127.0.0.1', port=8088):
+    def __init__(self, access_key=None, hostname='127.0.0.1', port=8088, ssl=False):
         """
         Create client instance
         :param hostname:
         :param port:
         """
         self._access_key = access_key
-        self._base_url = 'http://{}:{}/'.format(hostname, port)
+        self._base_url = '{}://{}:{}/'.format('https' if ssl else 'http', hostname, port)
 
     def get_endpoint(self, channel_id):
         """
