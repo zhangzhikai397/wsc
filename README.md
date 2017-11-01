@@ -56,7 +56,9 @@ Client library usage
     
     # The same result using client library
     c = WSC('A0B1C2D3', '0.0.0.0', 8080)
-    c.send('chat/room/1', 'Admin: Hi all')
+    r = c.send('chat/room/1', 'Admin: Hi all')
+    print(r.recipients)  # 234 - number of peers that was received message
+    print(c.stat('chat/room/1').raw)  # Channel statistic 
     
     
 # Receiving messages
