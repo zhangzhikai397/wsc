@@ -65,9 +65,9 @@ class Server(ThreadingMixIn, TCPServer):
         Wrap TLS
         :return:
         """
-        TCPServer.server_bind(self)
         if self.tls_enabled:
             self.socket = self.context.wrap_socket(self.socket, server_side=True)
+        TCPServer.server_bind(self)
 
     def _get_ssl_context(self):
         """
