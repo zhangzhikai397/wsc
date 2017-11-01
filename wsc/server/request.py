@@ -81,16 +81,31 @@ class RequestParser(object):
             return self._package_buffer
 
         # Read headers
-        self._package_buffer += self._req.read()
-        if len(self._package_buffer) == 1:
-            self._package_buffer += self._req.read()
+        headers, body_start = self._read_part()
+        self._package_buffer += headers + b'\r\n\r\n' + body_start
 
         # Read body
         self._parse()
-        content_length = int(self.headers.get('content-length', 0))
+        content_length = int(self.headers.get('content-length', 0)) - len(body_start)
         if content_length > 0:
             self._package_buffer += self._req.recv(content_length if content_length <= max_size else max_size)
         return self._package_buffer
+
+    def _read_part(self):
+        """
+        Reads headers and then body
+        :return:
+        """
+        sep = b'\r\n'*2
+
+        # Read headers
+        buffer = self._req.recv(32)
+        while sep not in buffer:
+            chunk = self._req.recv(32)
+            buffer += chunk
+            if len(chunk) < 16:
+                break
+        return tuple(buffer.split(sep, 1))
 
     def _parse(self):
         """
