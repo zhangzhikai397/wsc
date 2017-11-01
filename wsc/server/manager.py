@@ -181,14 +181,17 @@ class ConnectionsManger(object):
             self._channels[queue_id].send(message)
         return self.connected_peers(queue_id)
 
-    def disconnect(self, queue_id):
+    def disconnect(self, queue_id=None):
         """
         Disconnect from the queue
         :param str queue_id:
         :return:
         """
-        if queue_id in self._channels:
+        if queue_id and queue_id in self._channels:
             self._channels[queue_id].disconnect()
+        if queue_id is None:
+            for qid in self._channels.keys():
+                self.disconnect(qid)
 
     def add_peer(self, queue_id, handler, addr=None):
         """

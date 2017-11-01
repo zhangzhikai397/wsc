@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 class RequestParser(object):
     MAX_BODY_SIZE = 1024*1024
+    HEADER_SIZE = 1024*16
 
     def __init__(self, request):
         """
@@ -82,7 +83,7 @@ class RequestParser(object):
 
         # Read headers
         headers, body_start = self._read_part()
-        self._package_buffer += headers + b'\r\n\r\n' + body_start
+        self._package_buffer += (b'\r\n'*2).join([headers, body_start])
 
         # Read body
         self._parse()
@@ -99,11 +100,11 @@ class RequestParser(object):
         sep = b'\r\n'*2
 
         # Read headers
-        buffer = self._req.recv(32)
+        buffer = self._req.recv(self.HEADER_SIZE)
         while sep not in buffer:
-            chunk = self._req.recv(32)
+            chunk = self._req.recv(self.HEADER_SIZE)
             buffer += chunk
-            if len(chunk) < 16:
+            if len(chunk) < self.HEADER_SIZE:
                 break
         return tuple(buffer.split(sep, 1))
 
