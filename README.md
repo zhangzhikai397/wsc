@@ -11,7 +11,7 @@ will be ignored.
 
 **Requirements**
 
- - Python 3.4 or higher
+ - Python 2.7.9 or higher
  - Python PIP
 
 # Installation

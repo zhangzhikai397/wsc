@@ -75,6 +75,7 @@ class ConnectionHandler(StreamRequestHandler):
         """
         try:
             self.server.connections.remove_peer(self, self.client_address)
+            super(StreamRequestHandler, self).finish()
         except Exception as e:
             pass
 
