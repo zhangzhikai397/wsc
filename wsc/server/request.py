@@ -7,7 +7,7 @@ class HTTPRequest(BaseHTTPRequestHandler):
     """
     HTTP Request parser
     """
-    def __init__(self, request_text):
+    def __init__(self, request_text, addr):
         """
         Parse headers
         :param request_text:
@@ -15,6 +15,7 @@ class HTTPRequest(BaseHTTPRequestHandler):
         self.rfile = BytesIO(request_text)
         self.raw_requestline = self.rfile.readline()
         self.error_code = self.error_message = None
+        self.client_address = addr
         self.parse_request()
 
         self._body = None

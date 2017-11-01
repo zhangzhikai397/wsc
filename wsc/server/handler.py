@@ -66,7 +66,7 @@ class ConnectionHandler(StreamRequestHandler):
         :param message:
         :return:
         """
-        APIHandler(self, HTTPRequest(message)).dispatch()
+        APIHandler(self, HTTPRequest(message, self.client_address)).dispatch()
 
     def finish(self):
         """
