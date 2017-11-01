@@ -4,9 +4,9 @@ import re
 import struct
 import logging
 import wsc.logging
+from wsc.server.api import APIHandler
 from wsc.server.protocol import Adapter
 from wsc.server.request import HTTPRequest
-from wsc.server.response import HTTPResponse, status
 from wsc.server.compatiblity import StreamRequestHandler
 from wsc.util import unicode_decodeable, unicode_encodable, to_unicode, is_unicode
 
@@ -56,6 +56,8 @@ class ConnectionHandler(StreamRequestHandler):
                     self.read_next_message()
                 except:
                     continue
+        else:
+            self.finish()
 
     def handle_post(self, message):
         """
@@ -64,17 +66,7 @@ class ConnectionHandler(StreamRequestHandler):
         :param message:
         :return:
         """
-        request = HTTPRequest(message)
-        if request.command.lower() == 'post':
-            if request.headers.get('access-key', '').strip() == self.server.access_key:
-                self.server.connections.send(request.path.lower(), request.body)
-                self.request.send(
-                    HTTPResponse(status.CREATED, message='Message sent').bytes
-                )
-            else:
-                self.request.send(
-                    HTTPResponse(status.UNAUTHORIZED, message='Not authorized').bytes
-                )
+        APIHandler(self, HTTPRequest(message)).dispatch()
 
     def finish(self):
         """
@@ -93,7 +85,7 @@ class ConnectionHandler(StreamRequestHandler):
         :return:
         """
         try:
-            channel_id = re.search(r'GET (.*) HTTP', message, re.I).group(1).lower().strip()
+            channel_id = self.channel_id(message)
             print('New client for channel: {}'.format(channel_id))
             self.server.connections.add_peer(channel_id, self, self.client_address)
         except Exception as e:
@@ -234,3 +226,24 @@ class ConnectionHandler(StreamRequestHandler):
 
         # Add new client
         self.subscribe(message)
+
+    @staticmethod
+    def channel_id(request_head):
+        """
+        Returns channel ID
+        :return:
+        """
+        try:
+            request_path = re.search(r'GET (.*) HTTP', request_head, re.I).group(1)
+            return ConnectionHandler.filter_path(request_path)
+        except Exception as e:
+            return '/'
+
+    @staticmethod
+    def filter_path(path):
+        """
+        Returns filtered request URI
+        :param path:
+        :return:
+        """
+        return path.strip(' /').lower() or '/'

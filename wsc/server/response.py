@@ -4,7 +4,7 @@ import json
 from wsc.server.compatiblity import HTTPStatus as status
 
 
-class HTTPResponse(object):
+class JSONResponse(object):
     SERVER_NAME = 'WSC 1.0/Python 3'
 
     def __init__(self, status_code=status.OK, **data):

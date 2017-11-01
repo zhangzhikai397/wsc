@@ -15,6 +15,10 @@ class ConnectionItem(object):
         self._addr = addr
         self._handler = handler
 
+    @property
+    def id(self):
+        return str(':').join(list(map(str, self._addr)))
+
     def send(self, content):
         """
         Send message
@@ -45,7 +49,32 @@ class ConnectionList(object):
         """
         List instance
         """
-        self._connections = set()
+        self._connections = dict()
+        self._sent_messages = 0
+        self._sent_bytes = 0
+
+    def __len__(self):
+        """
+        Returns number of peers
+        :return:
+        """
+        return len(self._connections.keys())
+
+    @property
+    def sent_bytes(self):
+        """
+        Returns total sent bytes
+        :return:
+        """
+        return self._sent_bytes
+
+    @property
+    def sent_messages(self):
+        """
+        Returns total sent messages
+        :return:
+        """
+        return self._sent_messages
 
     def send(self, content):
         """
@@ -53,7 +82,9 @@ class ConnectionList(object):
         :param content:
         :return:
         """
-        for conn in self._connections:
+        self._sent_messages += 1
+        self._sent_bytes += len(content) * len(self)
+        for conn in self._connections.values():
             conn.send(content)
 
     def disconnect(self):
@@ -61,9 +92,9 @@ class ConnectionList(object):
         Disconnect and remove all connections
         :return:
         """
-        for conn in self._connections:
+        for addr, conn in self._connections.items():
             conn.disconnect()
-            self.remove(conn)
+            del self._connections[conn.id]
 
     def add(self, handler, addr=None):
         """
@@ -73,7 +104,7 @@ class ConnectionList(object):
         :return:
         """
         item = self._get_item_instance(handler, addr)
-        self._connections.add(item)
+        self._connections[item.id] = item
 
     def remove(self, handler, addr=None):
         """
@@ -85,7 +116,8 @@ class ConnectionList(object):
         item = self._get_item_instance(handler, addr)
         item.disconnect()
 
-        self._connections.remove(item)
+        if item.id in self._connections.keys():
+            del self._connections[item.id]
 
     @staticmethod
     def _get_item_instance(handler, addr=None):
@@ -108,6 +140,36 @@ class ConnectionsManger(object):
         """
         self._channels = dict()
 
+    def connected_peers(self, queue_id=None):
+        """
+        Returns number of peers
+        :param queue_id:
+        :return:
+        """
+        if queue_id is not None:
+            return len(self.get_list(queue_id))
+        return sum(list([len(q) for q in self._channels.values()]))
+
+    def sent_messages(self, queue_id=None):
+        """
+        Returns number of sent messages
+        :param queue_id:
+        :return:
+        """
+        if queue_id is not None:
+            return self.get_list(queue_id).sent_messages
+        return sum(list([q.sent_messages for q in self._channels.values()]))
+
+    def sent_bytes(self, queue_id=None):
+        """
+        Returns number of sent bytes
+        :param queue_id:
+        :return:
+        """
+        if queue_id is not None:
+            return self.get_list(queue_id).sent_bytes
+        return sum(list([q.sent_bytes for q in self._channels.values()]))
+
     def send(self, queue_id, message):
         """
         Sends message to selected queue
@@ -115,8 +177,9 @@ class ConnectionsManger(object):
         :param any message:
         :return:
         """
-        if queue_id in self._channels:
+        if queue_id in self.queues:
             self._channels[queue_id].send(message)
+        return self.connected_peers(queue_id)
 
     def disconnect(self, queue_id):
         """
