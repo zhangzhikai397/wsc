@@ -22,4 +22,9 @@ def run_server():
         ssl_cert=args.ssl_cert
     )
 
-    server.serve_forever()
+    try:
+        server.serve_forever(poll_interval=0.05)
+    except KeyboardInterrupt:
+        print('Shutting down connections...')
+        server.connections.disconnect()
+        server.server_close()

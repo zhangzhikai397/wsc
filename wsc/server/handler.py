@@ -31,6 +31,7 @@ class ConnectionHandler(StreamRequestHandler):
         self.keep_alive = True
         self.valid_client = False
         self.handshake_done = False
+        self.is_subscribed = False
         self.rp = None
         StreamRequestHandler.__init__(self, socket, addr, server)
 
@@ -58,8 +59,6 @@ class ConnectionHandler(StreamRequestHandler):
                     self.read_next_message()
                 except:
                     continue
-        else:
-            self.finish()
 
     def handle_post(self):
         """
@@ -74,11 +73,17 @@ class ConnectionHandler(StreamRequestHandler):
         Close connection
         :return:
         """
+        if self.is_subscribed:
+            try:
+                self.server.connections.remove_peer(self, self.client_address)
+                logger.debug('Peer {}:{} removed from queue'.format(*self.client_address))
+            except Exception as e:
+                logger.error('{}: {}'.format(type(e).__name__, str(e)))
+
         try:
-            self.server.connections.remove_peer(self, self.client_address)
-            super(StreamRequestHandler, self).finish()
+            super(ConnectionHandler, self).finish()
         except Exception as e:
-            pass
+            logger.error('{}: {}'.format(type(e).__name__, str(e)))
 
     def subscribe(self, message):
         """
@@ -88,10 +93,15 @@ class ConnectionHandler(StreamRequestHandler):
         """
         try:
             channel_id = self.channel_id(message)
-            print('New client for channel: {}'.format(channel_id))
             self.server.connections.add_peer(channel_id, self, self.client_address)
+            self.is_subscribed = True
+            logger.debug('New peer {}:{} connected to channel: {}'.format(
+                self.client_address[0], self.client_address[1], channel_id
+            ))
         except Exception as e:
-            logger.error('Failed to subscribe new peer {}: {}'.format(self.client_address, str(e)))
+            logger.error('Failed to subscribe new peer {}:{} - {}'.format(
+                self.client_address[0], self.client_address[1], str(e)
+            ))
 
     def read_bytes(self, num):
         """
@@ -116,23 +126,25 @@ class ConnectionHandler(StreamRequestHandler):
         masked = b2 & Adapter.MASKED
         payload_length = b2 & Adapter.PAYLOAD_LEN
 
+        # Wrong request type
         if not b1:
-            logger.info("Client closed connection.")
             self.keep_alive = 0
             return
+
+        # Closed by peer
         if opcode == Adapter.OPCODE_CLOSE_CONN:
-            logger.info("Client asked to close connection.")
             self.keep_alive = 0
             return
+
+        # Not masked
         if not masked:
-            logger.warn("Client must always be masked.")
             self.keep_alive = 0
             return
+
+        # Request opcodes dispatcher
         if opcode == Adapter.OPCODE_CONTINUATION:
-            logger.warn("Continuation frames are not supported.")
             return
         elif opcode == Adapter.OPCODE_BINARY:
-            logger.warn("Binary frames are not supported.")
             return
         elif opcode == Adapter.OPCODE_TEXT:
             opcode_handler = Adapter.process_message
@@ -141,7 +153,7 @@ class ConnectionHandler(StreamRequestHandler):
         elif opcode == Adapter.OPCODE_PONG:
             opcode_handler = Adapter.process_pong
         else:
-            logger.warn("Unknown opcode %#x." + opcode)
+            logger.warn("Unknown opcode %#x." % opcode)
             self.keep_alive = 0
             return
 

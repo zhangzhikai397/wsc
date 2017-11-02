@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import logging
+import wsc.logging
 from wsc.server.response import JSONResponse, status
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(**wsc.logging.config)
 
 
 def authenticate(fn):
@@ -26,6 +32,10 @@ class APIHandler(object):
         """
         self.request = request
         self.handler = handler
+
+        logger.debug('API Call [{}]: {}'.format(
+            self.request.method.upper(), self.request.path
+        ))
 
     @property
     def request_channel(self):
@@ -71,14 +81,19 @@ class APIHandler(object):
         """
         try:
             message = self.request.body
+            recipients = self.connection_manager.send(channel, message)
+            logger.debug('API: Sent message to {} recipients\n{}'.format(recipients, message))
             return JSONResponse(
                 status_code=status.CREATED,
                 channel_id=channel,
                 status="Message sent",
                 content_length=len(message),
-                recipients=self.connection_manager.send(channel, message)
+                recipients=recipients
             )
         except Exception as e:
+            logger.debug('API: Failed to send message {}: {}'.format(
+                type(e).__name__, str(e)
+            ))
             return JSONResponse(
                 status_code=status.BAD_REQUEST,
                 channel_id=channel,
@@ -96,8 +111,24 @@ class APIHandler(object):
             status_code=status.OK,
             channel_id=channel,
             stat=dict(
+                hosts=len(self.connection_manager.unique_hosts(channel)),
                 peers=self.connection_manager.connected_peers(channel),
                 sent_messages=self.connection_manager.sent_messages(channel),
                 sent_bytes=self.connection_manager.sent_bytes(channel)
             )
+        )
+
+    @authenticate
+    def process_options(self, channel):
+        """
+        Retrieve statistics
+        :param str channel:
+        :return:
+        """
+        hosts = list(self.connection_manager.unique_hosts(channel))
+        return JSONResponse(
+            status_code=status.OK,
+            channel_id=channel,
+            hosts=hosts,
+            count=len(hosts)
         )
