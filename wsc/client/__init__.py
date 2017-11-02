@@ -27,9 +27,26 @@ class StatResponse(object):
 
         stat = data.get('stat', dict())
         self.channel_id = data.get('channel_id', '/')
+        self.hosts = stat.get('hosts', 0)
         self.peers = stat.get('peers', 0)
         self.sent_bytes = stat.get('sent_bytes', 0)
         self.sent_messages = stat.get('sent_messages', 0)
+
+    @property
+    def raw(self):
+        return self._raw
+
+
+class HostsResponse(object):
+    def __init__(self, data):
+        self._raw = data or dict()
+
+        self.channel_id = data.get('channel_id', '/')
+        self.count = data.get('count', 0)
+        self.hosts = data.get('hosts', [])
+
+    def __len__(self):
+        return self.count
 
     @property
     def raw(self):
@@ -94,3 +111,18 @@ class WSC(object):
         )
 
         return StatResponse(response.json())
+
+    def hosts(self, channel_id='/'):
+        """
+        Returns channel statistic
+        :param channel_id:
+        :return StatResponse:
+        """
+        response = requests.options(
+            self.get_endpoint(channel_id),
+            headers={
+                'Access-Key': self._access_key
+            }
+        )
+
+        return HostsResponse(response.json())

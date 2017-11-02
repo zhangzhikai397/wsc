@@ -42,12 +42,13 @@ class Adapter(object):
         :param key:
         :return:
         """
-        return \
-            'HTTP/1.1 101 Switching Protocols\r\n' \
-            'Upgrade: websocket\r\n' \
-            'Connection: Upgrade\r\n' \
-            'Sec-WebSocket-Accept: %s\r\n' \
-            '\r\n' % Adapter.handshake(key)
+        return (
+            'HTTP/1.1 101 Switching Protocols\r\n'
+            'Upgrade: websocket\r\n'
+            'Connection: Upgrade\r\n'
+            'Sec-WebSocket-Accept: %s\r\n'
+            '\r\n'
+        ) % Adapter.handshake(key)
 
     @staticmethod
     def process_ping(handler, msg):
@@ -67,7 +68,7 @@ class Adapter(object):
         :param msg:
         :return:
         """
-        pass
+        handler.send_text(msg, Adapter.OPCODE_PONG)
 
     @staticmethod
     def process_message(handler, msg):

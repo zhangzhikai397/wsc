@@ -106,7 +106,8 @@ class RequestParser(object):
             buffer += chunk
             if len(chunk) < self.HEADER_SIZE:
                 break
-        return tuple(buffer.split(sep, 1))
+        buffer = tuple(buffer.split(sep, 1))
+        return buffer if len(buffer) == 2 else tuple([buffer[0], b''])
 
     def _parse(self):
         """

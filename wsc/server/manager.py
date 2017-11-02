@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import logging
+import wsc.logging
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(**wsc.logging.config)
 
 
 class ConnectionItem(object):
@@ -28,6 +34,9 @@ class ConnectionItem(object):
         try:
             self._handler.send_text(content)
         except Exception as e:
+            logger.error('Failed to send message to peer {}:{} - {}: {}'.format(
+                self._addr[0], self._addr[1], type(e).__name__, str(e)
+            ))
             self._handler.finish()
 
     def disconnect(self):
@@ -58,7 +67,7 @@ class ConnectionList(object):
         Returns number of peers
         :return:
         """
-        return len(self._connections.keys())
+        return len(self._connections)
 
     @property
     def sent_bytes(self):
@@ -76,13 +85,21 @@ class ConnectionList(object):
         """
         return self._sent_messages
 
+    @property
+    def unique_hosts(self):
+        """
+        Returns number of unique hosts
+        :return:
+        """
+        return set(list(map(lambda x: x.split(':')[0], self._connections.keys())))
+
     def send(self, content):
         """
         Send content to each connection
         :param content:
         :return:
         """
-        self._sent_messages += 1
+        self._sent_messages += len(self)
         self._sent_bytes += len(content) * len(self)
         for conn in self._connections.values():
             conn.send(content)
@@ -169,6 +186,20 @@ class ConnectionsManger(object):
         if queue_id is not None:
             return self.get_list(queue_id).sent_bytes
         return sum(list([q.sent_bytes for q in self._channels.values()]))
+
+    def unique_hosts(self, queue_id=None):
+        """
+        Returns number of unique hosts
+        :param queue_id:
+        :return:
+        """
+        if queue_id is not None:
+            return self.get_list(queue_id).unique_hosts
+
+        result = set()
+        for channel in self._channels.values():
+            result = result.union(channel.unique_hosts)
+        return result
 
     def send(self, queue_id, message):
         """

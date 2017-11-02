@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import logging
 import ssl
-
+import logging
 import wsc.logging
 from wsc.server.protocol import Adapter
 from wsc.server.handler import ConnectionHandler
@@ -42,6 +41,7 @@ class Server(ThreadingMixIn, TCPServer):
         self.ssl_key = ssl_key
 
         if self.tls_enabled:
+            logger.info('SSL Mode enabled. Creating context...')
             self.context = self._get_ssl_context()
 
         # Run TCP Server
@@ -66,6 +66,7 @@ class Server(ThreadingMixIn, TCPServer):
         :return:
         """
         if self.tls_enabled:
+            logger.info('Wrapping socket using SSL...')
             self.socket = self.context.wrap_socket(self.socket, server_side=True)
         TCPServer.server_bind(self)
 
