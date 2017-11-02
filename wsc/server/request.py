@@ -118,7 +118,13 @@ class RequestParser(object):
         for index, line in enumerate(headers.split('\r\n')):
             # Process head line
             if index == 0:
-                method, uri, http = tuple(line.split(' '))
+                head = tuple(line.split())
+                if len(head) < 3:
+                    print('Weired head: {}'.format(line))
+                    method, uri, http = ('GET', '/', 'HTTP/1.1')
+                else:
+                    method, uri, http = head
+
                 self._method = method.lower().strip()
                 self._path = uri.lower().strip()
                 self._http = http.strip()
