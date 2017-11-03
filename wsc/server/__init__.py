@@ -25,6 +25,7 @@ class Server(ThreadingMixIn, TCPServer):
     # TCP Server options
     allow_reuse_address = True
     daemon_threads = True
+    request_queue_size = 100
 
     def __init__(self, hostname=DEFAULT_HOST, port=DEFAULT_PORT, access_key=None, ssl_cert=None, ssl_key=None):
         """
@@ -59,6 +60,10 @@ class Server(ThreadingMixIn, TCPServer):
         ))
 
         logger.warning('Server API Access KEY: {}'.format(access_key))
+        logger.debug('Reuse ADDR:\t{}'.format(self.allow_reuse_address))
+        logger.debug('TLS Enabled:\t{}'.format(self.tls_enabled))
+        logger.debug('Daemon threads:\t{}'.format(self.daemon_threads))
+        logger.debug('Request queue size:\t{}'.format(self.request_queue_size))
 
     def server_bind(self):
         """
@@ -78,3 +83,18 @@ class Server(ThreadingMixIn, TCPServer):
         context = ssl.SSLContext(self.TLS_VERSION)
         context.load_cert_chain(self.ssl_cert, self.ssl_key)
         return context
+
+    @staticmethod
+    def set_option(opt_name, value):
+        """
+        Updates static option for server
+        :param opt_name:
+        :param value:
+        :return:
+        """
+        assert hasattr(Server, opt_name), (
+            "Attribute {} doesn't exists at "
+            "Server class"
+        ).format(opt_name)
+
+        setattr(Server, opt_name, value)

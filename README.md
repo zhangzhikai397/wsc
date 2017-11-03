@@ -1,6 +1,6 @@
 # WebSocket Channel
 
-WebSocket Channel is a Python3 lightweight and very fast server, to be used to communicate any python
+WebSocket Channel is a Python lightweight and very fast server, to be used to communicate any python
 backend with users browsers via WebSockets protocol. WebSocket Channel has very simple API and can work only
 in one direction - `server -> browser`. Any browser's messages that was sent to the server.
 will be ignored.
@@ -29,6 +29,8 @@ Command `wsc` has only few arguments and one of them is required.
  - --port (optional, 8088): Server port
  - --ssl-key (optional, None): Server SSL Key file path
  - --ssl-cert (optional, None): Server SSL Certificate file path
+ - --queue-size (optional, 100): Socket request queue size
+ - --reuse-addr (optional, True): Allows to reuse socket addr
 
 **shell**
 
@@ -61,6 +63,7 @@ Client library usage
     r = c.send('chat/room/1', 'Admin: Hi all')
     print(r.recipients)  # 234 - number of peers that was received message
     print(c.stat('chat/room/1').raw)  # Channel statistic 
+    print(c.hosts('chat/room/1').hosts)  # Returns array of unique connected hosts
     
     
 # Receiving messages
